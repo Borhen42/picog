@@ -5,4 +5,4 @@ resources:
 images:
   - name: api-gateway
     newName: docker.io/borhen2/api-gateway
-    newTag: b69cb50
+    newTag: 27197ab
