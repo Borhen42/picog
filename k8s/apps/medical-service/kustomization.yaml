@@ -4,5 +4,5 @@ resources:
   - deployment.yaml
 images:
   - name: medical-service
-    newName: docker.io/borhen42/medical-service
-    newTag: latest
+    newName: docker.io/borhen2/medical-service
+    newTag: feee67d
