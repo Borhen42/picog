@@ -4,8 +4,8 @@ GitOps deployment for the five projects: **eureka-server**, **apiGateway**,
 **medical-service**, **mmse-service**, **frontend**.
 
 ```
- push to main ──▶ GitHub Actions (per project, path-filtered)
-                    │  build + test  ->  docker build  ->  push docker.io/<user>/<svc>:<sha>
+ push to main ──▶ GitHub Actions (per project, path-filtered) on SELF-HOSTED ARC runners
+                    │  build + test  ->  SonarQube analysis + gate  ->  docker build  ->  push docker.io/<user>/<svc>:<sha>
                     │  then: yq bumps k8s/apps/<svc>/kustomization.yaml  ->  commit [skip ci]
                     ▼
               Git (this repo, k8s/**)
@@ -28,11 +28,21 @@ CI does **build + ship + tag-bump**; Argo CD does **deploy**. The two only meet 
 |---|---|
 | `DOCKERHUB_USERNAME` | your Docker Hub username |
 | `DOCKERHUB_TOKEN` | a Docker Hub **access token** (`hub.docker.com ▸ Account Settings ▸ Personal access tokens`, Read/Write) |
+| `SONAR_TOKEN` | a SonarQube token (`sonarqube.local ▸ My Account ▸ Security`) — used by every pipeline's Sonar step |
 
 > The manifests are seeded with `docker.io/borhen42/...`. If your Docker Hub user
 > differs, you don't need to hand-edit them — the first push to `main` runs CI, which
 > rewrites `newName` in each `k8s/apps/<svc>/kustomization.yaml` from `DOCKERHUB_USERNAME`.
 > (Or edit the 5 `kustomization.yaml` files once.)
+
+### a-bis) Self-hosted runners (ARC) — REQUIRED, and how SonarQube got wired in
+The pipelines run on **self-hosted runners inside the cluster** (`runs-on: cognivita-runners`),
+not GitHub-hosted ones — that's the only way CI can reach the in-cluster SonarQube
+(`sonarqube-sonarqube.sonarqube.svc.cluster.local:9000`). Install them once with Actions
+Runner Controller and generate the `SONAR_TOKEN` above: see **[`k8s/arc/README.md`](arc/README.md)**.
+Until the runners are online, workflow jobs queue instead of running. Backend Sonar analysis
+uses JaCoCo coverage and **enforces** the quality gate; the frontend is report-only until its
+Vitest suite is fixed.
 
 ### b) Docker Hub image visibility
 Simplest for a demo: let the 5 repos be **public** (default) — the cluster then pulls

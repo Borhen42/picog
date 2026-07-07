@@ -7,7 +7,7 @@ metadata:
 spec:
   description: COGNIVITA microservices (GitOps CD)
   sourceRepos:
-    - https://github.com/Borhen42/pi-cognitive.git
+    - https://github.com/Borhen42/picog.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: cognivita

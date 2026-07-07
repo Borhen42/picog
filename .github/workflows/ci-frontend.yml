@@ -17,7 +17,9 @@ concurrency:
 
 jobs:
   build-test-deploy:
-    runs-on: ubuntu-latest
+    # Self-hosted ARC runner inside the WSL cluster (see k8s/arc/) — required so the
+    # SonarQube step can reach the in-cluster server. dind provides Docker for the image build.
+    runs-on: cognivita-runners
     permissions:
       contents: write
     steps:
@@ -36,13 +38,26 @@ jobs:
         run: npm ci
 
       # Vitest runs once (non-TTY). Kept non-blocking until the Angular 21 test
-      # suite is stabilized — the production build below is the hard gate.
-      - name: Unit tests
+      # suite is stabilized — the production build below is the hard gate. Coverage is
+      # emitted to frontend/coverage/lcov.info (angular.json test builder -> lcovonly) for Sonar.
+      - name: Unit tests (+ coverage)
         working-directory: frontend
         continue-on-error: true
         env:
           CI: "true"
         run: npm test
+
+      # SonarQube analysis + quality gate. This is a Node action, so it runs in the runner
+      # container (which has cluster DNS) — that's why it can reach the in-cluster Sonar
+      # ClusterIP. Config (projectKey, sources, lcov path, qualitygate.wait) lives in
+      # frontend/sonar-project.properties.
+      - name: SonarQube analysis
+        uses: sonarsource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000' }}
+        with:
+          projectBaseDir: frontend
 
       - name: Compute image tag (short SHA)
         id: meta
@@ -70,6 +85,15 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/cognivita-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The minimal ARC runner image has no `yq` (unlike GitHub's ubuntu-latest); install it.
+      - name: Install yq
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64 -o "$HOME/.local/bin/yq"
+          chmod +x "$HOME/.local/bin/yq"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Bump image tag in GitOps manifest
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

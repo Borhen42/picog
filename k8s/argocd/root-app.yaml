@@ -12,7 +12,7 @@ metadata:
 spec:
   project: cognivita
   source:
-    repoURL: https://github.com/Borhen42/pi-cognitive.git
+    repoURL: https://github.com/Borhen42/picog.git
     targetRevision: main
     path: k8s/argocd/apps
   destination:

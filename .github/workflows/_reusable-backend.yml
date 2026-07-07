@@ -26,10 +26,15 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      SONAR_TOKEN:
+        required: true
 
 jobs:
   build-test-deploy:
-    runs-on: ubuntu-latest
+    # Self-hosted ARC runners inside the WSL cluster (see k8s/arc/). Running here is what
+    # lets the SonarQube step below reach the in-cluster server; `cognivita-runners` is the
+    # Helm release name of the gha-runner-scale-set.
+    runs-on: cognivita-runners
     permissions:
       contents: write        # needed to push the image-tag bump back to main
     steps:
@@ -48,6 +53,25 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw -B --no-transfer-progress verify
+
+      # SonarQube analysis + quality gate. Reuses the target/ produced by `verify` above
+      # (compiled classes, surefire reports, jacoco.xml) in the same workspace. The fully
+      # qualified plugin coordinate avoids needing a plugin-prefix in each pom. The host is
+      # the in-cluster ClusterIP DNS — only reachable because this runs on the ARC runner.
+      # `sonar.qualitygate.wait=true` fails the job on a RED gate (see k8s/arc/README.md).
+      - name: SonarQube analysis
+        working-directory: Backend/${{ inputs.service_dir }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000' }}
+        run: |
+          ./mvnw -B --no-transfer-progress \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
+            -Dsonar.token="$SONAR_TOKEN" \
+            -Dsonar.projectKey=cognivita-${{ inputs.image_name }} \
+            -Dsonar.projectName=cognivita-${{ inputs.image_name }} \
+            -Dsonar.qualitygate.wait=true
 
       - name: Compute image tag (short SHA)
         id: meta
@@ -73,6 +97,16 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # The minimal ARC runner image (ghcr.io/actions/actions-runner) has no `yq`, unlike
+      # GitHub's ubuntu-latest. Install a pinned binary into PATH for the bump step below.
+      - name: Install yq
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64 -o "$HOME/.local/bin/yq"
+          chmod +x "$HOME/.local/bin/yq"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # GitOps: point the manifest at the freshly-pushed tag. Only on pushes to main
       # (not PRs). The commit touches k8s/** only, so it never re-triggers this workflow

@@ -1,0 +1,38 @@
+# Helm values for the ARC "gha-runner-scale-set" that runs COGNIVITA CI inside the
+# WSL kubeadm cluster. The Helm *release name* of this chart becomes the GitHub Actions
+# `runs-on:` label — we install it as `cognivita-runners`, so workflows use
+#   runs-on: cognivita-runners
+# See k8s/arc/README.md for the install/runbook.
+
+# Repository these runners serve (repo-scoped registration).
+githubConfigUrl: https://github.com/Borhen42/picog
+
+# Name of a *pre-created* Kubernetes Secret (in the arc-runners namespace) holding the
+# classic PAT under key `github_token`. install-arc.sh creates it; it is NEVER committed.
+githubConfigSecret: arc-github-secret
+
+# Single-node cluster — keep concurrency modest. minRunners: 1 keeps one runner warm so
+# the scale set shows "online" and jobs start fast; set it to 0 to free resources when idle.
+minRunners: 1
+maxRunners: 3
+
+# Docker-in-Docker: gives every runner pod its own Docker daemon (a `dind` sidecar) so the
+# pipelines' `docker/build-push-action` steps work unchanged. Required here because CI builds
+# and pushes images. dind runs privileged; fine on this single-node WSL cluster.
+containerMode:
+  type: dind
+
+# Optional: cap the runner container's resources so concurrent dind builds don't starve the
+# node. Uncomment and tune for your laptop. (The chart injects the dind sidecar automatically;
+# we only override the `runner` container here, matched by name.)
+# template:
+#   spec:
+#     containers:
+#       - name: runner
+#         resources:
+#           requests:
+#             cpu: "500m"
+#             memory: "1Gi"
+#           limits:
+#             cpu: "2"
+#             memory: "4Gi"
