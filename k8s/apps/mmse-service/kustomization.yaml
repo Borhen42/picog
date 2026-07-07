@@ -4,5 +4,5 @@ resources:
   - deployment.yaml
 images:
   - name: mmse-service
-    newName: docker.io/borhen42/mmse-service
-    newTag: latest
+    newName: docker.io/borhen2/mmse-service
+    newTag: feee67d
