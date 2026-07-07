@@ -1,0 +1,164 @@
+<div class="home">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="bg-nebula js-sweep"></div>
+      <div class="bg-grid"></div>
+      <div class="bg-stars"></div>
+    </div>
+
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-badge js-heroBadge js-float">
+          <span class="badge-dot"></span>
+          <span class="badge-strong">COGNIVITA</span>
+          <span class="badge-soft">AI‑powered cognitive health platform</span>
+        </div>
+
+        <h1 class="hero-title js-heroTitle">
+          <span class="title-top">Detect. Track. Improve.</span>
+          <span class="title-brand">Cognitive clarity, made visual.</span>
+        </h1>
+
+        <p class="hero-lead js-heroLead">
+          COGNIVITA combines a guided menu experience, MMSE screening, AI brain scan analysis, and medical records to
+          support early detection and ongoing monitoring.
+        </p>
+
+        <div class="hero-cta js-heroActions">
+          <a class="btn btn-primary" routerLink="/mmse">
+            <span class="btn-ic">📋</span>
+            Start MMSE
+          </a>
+          <a class="btn btn-secondary" routerLink="/cnn">
+            <span class="btn-ic">🤖</span>
+            AI Scanner
+          </a>
+          <a class="btn btn-ghost" routerLink="/admin">
+            <span class="btn-ic">⚙️</span>
+            Admin Dashboard
+          </a>
+        </div>
+
+        <div class="hero-metrics js-reveal">
+          <div class="metric">
+            <div class="metric-value">3D</div>
+            <div class="metric-label">Brain Visualization</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">AI</div>
+            <div class="metric-label">Deep Learning</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">Fast</div>
+            <div class="metric-label">Results + Tracking</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="brain-frame js-reveal">
+          <div class="brain-glow" aria-hidden="true"></div>
+          <app-brain3d [diagnosis]="'normal'"></app-brain3d>
+          <div class="brain-caption">
+            <span class="pulse"></span>
+            Interactive 3D brain preview
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-hint js-float" aria-hidden="true">
+      <div class="mouse"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- MENU GUIDE -->
+  <section class="section menu-guide js-reveal" id="menu-guide">
+    <header class="section-head">
+      <h2 class="section-title">
+        <span class="section-ic js-float">🧭</span>
+        Menu guide (dropdowns explained)
+      </h2>
+      <p class="section-sub">
+        Each navbar dropdown is a workspace. Here’s what you’ll find inside — and what’s already available now.
+      </p>
+    </header>
+
+    <div class="guide-grid js-stagger">
+      <article class="guide-card js-staggerItem" *ngFor="let cat of menuGuide">
+        <div class="guide-top">
+          <div class="guide-ic js-float">{{ cat.icon }}</div>
+          <div class="guide-meta">
+            <div class="guide-title">{{ cat.title }}</div>
+            <div class="guide-desc">{{ cat.desc }}</div>
+          </div>
+        </div>
+
+        <ul class="guide-items">
+          <li class="guide-item" *ngFor="let it of cat.items">
+            <div class="item-ic">{{ it.icon }}</div>
+            <div class="item-body">
+              <div class="item-title">
+                {{ it.title }}
+                <span class="pill" *ngIf="it.soon">Soon</span>
+              </div>
+              <div class="item-desc">{{ it.desc }}</div>
+            </div>
+            <a *ngIf="it.route" class="item-action" [routerLink]="it.route">Open</a>
+            <span *ngIf="!it.route" class="item-action disabled">—</span>
+          </li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- QUICK START -->
+  <section class="section quick-start js-reveal">
+    <header class="section-head">
+      <h2 class="section-title">
+        <span class="section-ic js-float">⚡</span>
+        Quick start
+      </h2>
+      <p class="section-sub">Pick your workflow: screening, scan analysis, or record management.</p>
+    </header>
+
+    <div class="qs-grid js-stagger">
+      <a class="qs-card js-staggerItem" routerLink="/mmse">
+        <div class="qs-ic">📋</div>
+        <div class="qs-title">MMSE screening</div>
+        <div class="qs-desc">Run a standardized cognitive test and store results.</div>
+        <div class="qs-arrow">→</div>
+      </a>
+      <a class="qs-card js-staggerItem" routerLink="/cnn">
+        <div class="qs-ic">🤖</div>
+        <div class="qs-title">AI brain scan</div>
+        <div class="qs-desc">Upload an MRI scan and get a prediction + confidence.</div>
+        <div class="qs-arrow">→</div>
+      </a>
+      <a class="qs-card js-staggerItem" routerLink="/medical-records">
+        <div class="qs-ic">🏥</div>
+        <div class="qs-title">Medical records</div>
+        <div class="qs-desc">Create, update, and review patient clinical files.</div>
+        <div class="qs-arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  
+
+  <!-- FOOTER -->
+  <footer class="footer js-reveal">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-ic js-float">🧠</span>
+        <span class="footer-name">COGNIVITA</span>
+      </div>
+      <p class="footer-t">Advanced cognitive health assessment platform.</p>
+      <p class="footer-s">
+        Screening support only — not a substitute for professional medical diagnosis.
+      </p>
+    </div>
+  </footer>
+</div>

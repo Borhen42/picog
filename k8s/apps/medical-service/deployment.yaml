@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medical-config
+  namespace: cognivita
+data:
+  # Point at the in-cluster MySQL + Eureka (Spring relaxed binding maps these env
+  # var names onto spring.datasource.* / eureka.* and overrides application.properties).
+  SPRING_DATASOURCE_URL: "jdbc:mysql://medical-mysql:3306/medical_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8"
+  SPRING_DATASOURCE_USERNAME: "root"
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8080/eureka/"
+  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+  MMSE_SERVICE_URL: "http://mmse-service:8085"
+  AZURE_AI_ENDPOINT: "https://ilyeszaidi4532-resource.services.ai.azure.com/openai/v1"
+  AZURE_AI_DEPLOYMENT: "Kimi-K2.6"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-service
+  namespace: cognivita
+  labels:
+    app: medical-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medical-service
+  template:
+    metadata:
+      labels:
+        app: medical-service
+    spec:
+      containers:
+        - name: medical-service
+          image: medical-service
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: medical-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medical-db-secret
+                  key: mysql-root-password
+            # optional:true → pod still starts if the Azure key secret is absent;
+            # the AI-summary endpoint simply returns "not configured".
+            - name: AZURE_AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: medical-ai-secret
+                  key: api-key
+                  optional: true
+          readinessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-service
+  namespace: cognivita
+spec:
+  selector:
+    app: medical-service
+  ports:
+    - port: 8083
+      targetPort: 8083

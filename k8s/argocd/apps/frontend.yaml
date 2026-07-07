@@ -1,0 +1,26 @@
+# Wave 3 — last, so the api-gateway Service exists before the frontend nginx
+# (which reverse-proxies /api to it) starts up.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cognivita
+  source:
+    repoURL: https://github.com/Borhen42/pi-cognitive.git
+    targetRevision: main
+    path: k8s/apps/frontend
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cognivita
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

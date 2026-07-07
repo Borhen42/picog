@@ -1,0 +1,327 @@
+<div class="super-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>🏥 Alzheimer Detection System - Admin Dashboard</h1>
+      <p class="subtitle">Complete System Overview & Analytics</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-export" (click)="exportUsersCSV()">📥 Export Users</button>
+      <button class="btn btn-export" (click)="exportMMSECSV()">📥 Export MMSE</button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'" class="tab-btn">
+      📊 Overview
+    </button>
+    <button [class.active]="activeTab === 'analytics'" (click)="activeTab = 'analytics'" class="tab-btn">
+      📈 Analytics
+    </button>
+    <button [class.active]="activeTab === 'users'" (click)="activeTab = 'users'" class="tab-btn">
+      👥 Users
+    </button>
+    <button [class.active]="activeTab === 'health'" (click)="activeTab = 'health'" class="tab-btn">
+      💚 System Health
+    </button>
+  </div>
+
+  <!-- Loading & Error States -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loader"></div>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadDashboard()">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error && dashboardData" class="dashboard-content">
+
+    <!-- OVERVIEW TAB -->
+    <div *ngIf="activeTab === 'overview'" class="tab-content">
+      
+      <!-- Key Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card premium">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <h3>Total Users</h3>
+            <p class="stat-number">{{ dashboardData.stats.totalUsers }}</p>
+            <span class="stat-label">{{ dashboardData.stats.activeUsers }} active</span>
+          </div>
+        </div>
+
+        <div class="stat-card premium">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info">
+            <h3>MMSE Tests</h3>
+            <p class="stat-number">{{ dashboardData.stats.totalMMSETests }}</p>
+            <span class="stat-label">Avg Score: {{ dashboardData.stats.averageMMSEScore | number: '1.1-1' }}/30</span>
+          </div>
+        </div>
+
+        <div class="stat-card premium">
+          <div class="stat-icon">🧠</div>
+          <div class="stat-info">
+            <h3>This Month</h3>
+            <p class="stat-number">{{ dashboardData.stats.testsThisMonth }}</p>
+            <span class="stat-label">tests conducted</span>
+          </div>
+        </div>
+
+        <div class="stat-card premium">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <h3>Normal Cognition</h3>
+            <p class="stat-number">{{ dashboardData.stats.normalCognitionCount }}</p>
+            <span class="stat-label">patients</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Distribution -->
+      <div class="two-column-layout">
+        <div class="chart-card">
+          <h3>👨‍⚕️ User Roles</h3>
+          <div class="role-stats">
+            <div class="role-item">
+              <span class="role-name">Admins</span>
+              <div class="role-bar">
+                <div class="role-fill admin" [style.width.%]="(dashboardData.stats.totalAdmins / dashboardData.stats.totalUsers * 100)"></div>
+              </div>
+              <span class="role-count">{{ dashboardData.stats.totalAdmins }}</span>
+            </div>
+            <div class="role-item">
+              <span class="role-name">Doctors</span>
+              <div class="role-bar">
+                <div class="role-fill doctor" [style.width.%]="(dashboardData.stats.totalDoctors / dashboardData.stats.totalUsers * 100)"></div>
+              </div>
+              <span class="role-count">{{ dashboardData.stats.totalDoctors }}</span>
+            </div>
+            <div class="role-item">
+              <span class="role-name">Patients</span>
+              <div class="role-bar">
+                <div class="role-fill patient" [style.width.%]="(dashboardData.stats.totalPatients / dashboardData.stats.totalUsers * 100)"></div>
+              </div>
+              <span class="role-count">{{ dashboardData.stats.totalPatients }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>🧬 Cognitive Status</h3>
+          <div class="status-grid">
+            <div class="status-item green">
+              <span class="status-value">{{ dashboardData.stats.normalCognitionCount }}</span>
+              <span class="status-label">Normal</span>
+            </div>
+            <div class="status-item yellow">
+              <span class="status-value">{{ dashboardData.stats.mildImpairmentCount }}</span>
+              <span class="status-label">Mild</span>
+            </div>
+            <div class="status-item orange">
+              <span class="status-value">{{ dashboardData.stats.moderateImpairmentCount }}</span>
+              <span class="status-label">Moderate</span>
+            </div>
+            <div class="status-item red">
+              <span class="status-value">{{ dashboardData.stats.severeImpairmentCount }}</span>
+              <span class="status-label">Severe</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="card">
+        <h3>📝 Recent Activities</h3>
+        <div class="activity-list">
+          <div *ngFor="let activity of dashboardData.recentActivities" class="activity-item">
+            <span class="activity-icon">{{ activity.icon }}</span>
+            <div class="activity-content">
+              <p class="activity-desc">{{ activity.description }}</p>
+              <small class="activity-time">{{ activity.timestamp }}</small>
+            </div>
+            <span [class]="'activity-type ' + activity.type.toLowerCase()">{{ activity.type }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div *ngIf="activeTab === 'analytics'" class="tab-content">
+      <div class="card">
+        <h3>📊 MMSE Test Analytics</h3>
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Patient Name</th>
+              <th>Test Count</th>
+              <th>Average Score</th>
+              <th>Highest</th>
+              <th>Lowest</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let test of dashboardData.testAnalytics">
+              <td>{{ test.patientName }}</td>
+              <td><span class="badge">{{ test.testCount }}</span></td>
+              <td><strong>{{ test.averageScore | number: '1.1-1' }}</strong></td>
+              <td>{{ test.highestScore }}</td>
+              <td>{{ test.lowestScore }}</td>
+              <td><span class="trend">{{ getTrendIcon(test.trend) }} {{ test.trend }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MMSE Distribution -->
+      <div class="two-column-layout">
+        <div class="chart-card">
+          <h3>📈 MMSE Score Distribution</h3>
+          <div class="distribution-bars">
+            <div *ngFor="let dist of dashboardData.mmseScoreDistribution" class="dist-item">
+              <div class="dist-label">{{ dist.label }}</div>
+              <div class="dist-bar">
+                <div class="dist-fill" [style.width.%]="(dist.value / 10 * 100)" [style.background-color]="dist.color"></div>
+              </div>
+              <div class="dist-value">{{ dist.value }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>👥 User Role Distribution</h3>
+          <div class="distribution-bars">
+            <div *ngFor="let role of dashboardData.userRoleDistribution" class="dist-item">
+              <div class="dist-label">{{ role.label }}</div>
+              <div class="dist-bar">
+                <div class="dist-fill" [style.width.%]="(role.value / 5 * 100)" [style.background-color]="role.color"></div>
+              </div>
+              <div class="dist-value">{{ role.value }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div *ngIf="activeTab === 'users'" class="tab-content">
+      <div class="card">
+        <h3>🔍 User Management</h3>
+        <div class="search-filter-section">
+          <div class="search-box">
+            <input type="text" placeholder="Search by name or email..." [(ngModel)]="searchQuery" (keyup.enter)="searchUsers()">
+            <button (click)="searchUsers()" class="btn btn-search">🔍 Search</button>
+          </div>
+          
+          <div class="filter-box">
+            <select [(ngModel)]="selectedRole" (change)="filterUsers()" class="filter-select">
+              <option value="">All Roles</option>
+              <option value="ADMIN">Admin</option>
+              <option value="DOCTOR">Doctor</option>
+              <option value="USER">User</option>
+            </select>
+
+            <select [(ngModel)]="selectedStatus" (change)="filterUsers()" class="filter-select">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>All Users</h3>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Phone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of dashboardData | async">
+              <td>#{{ user.userId }}</td>
+              <td>{{ user.firstName }} {{ user.lastName }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="role-badge" [class]="user.role.toLowerCase()">{{ user.role }}</span></td>
+              <td><span [class]="user.active ? 'status-active' : 'status-inactive'">{{ user.active ? '✅ Active' : '❌ Inactive' }}</span></td>
+              <td>{{ user.phone || '-' }}</td>
+              <td>
+                <button class="btn btn-small btn-danger" (click)="deleteUser(user.userId)">🗑️ Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SYSTEM HEALTH TAB -->
+    <div *ngIf="activeTab === 'health'" class="tab-content">
+      <div class="health-container">
+        <div class="health-card" [class]="getHealthStatusClass(dashboardData.systemHealth.status)">
+          <h3>🏥 System Status</h3>
+          <div class="health-status">
+            <div class="status-badge" [class]="'status-' + dashboardData.systemHealth.status.toLowerCase()">
+              {{ dashboardData.systemHealth.status }}
+            </div>
+          </div>
+          
+          <div class="health-details">
+            <div class="health-item">
+              <span class="health-label">⏱️ Uptime</span>
+              <span class="health-value">{{ (dashboardData.systemHealth.uptime / 60 / 60) | number: '1.0-0' }} hours</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">⚙️ CPU Usage</span>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="dashboardData.systemHealth.cpuUsage"></div>
+              </div>
+              <span class="health-value">{{ dashboardData.systemHealth.cpuUsage | number: '1.1-1' }}%</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">🧠 Memory Usage</span>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="dashboardData.systemHealth.memoryUsage"></div>
+              </div>
+              <span class="health-value">{{ dashboardData.systemHealth.memoryUsage | number: '1.1-1' }}%</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">💾 Database</span>
+              <span class="health-value status-connected">{{ dashboardData.systemHealth.databaseStatus }}</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">📦 Last Backup</span>
+              <span class="health-value">{{ dashboardData.systemHealth.lastBackup }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="backup-card">
+          <h3>💾 Backup Management</h3>
+          <button class="btn btn-large btn-primary">🔄 Create Backup Now</button>
+          <div class="backup-info">
+            <p>✅ Backups are automatically created daily</p>
+            <p>📍 Location: /backups/</p>
+            <p>🔒 Encryption: AES-256</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

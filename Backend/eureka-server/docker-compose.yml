@@ -1,0 +1,13 @@
+services:
+  eureka-server:
+    build: .
+    image: eureka-server:latest
+    container_name: eureka-server
+    ports:
+      - "8761:8080"
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true

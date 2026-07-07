@@ -1,0 +1,44 @@
+server:
+  port: 8093
+
+spring:
+  application:
+    name: ApiGateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: medical-service
+              uri: lb://MEDICAL-SERVICE
+              predicates:
+                - Path=/api/medical-records/**,/api/consultations/**
+
+            - id: mmse-service
+              uri: lb://MMSE-SERVICE
+              predicates:
+                - Path=/api/mmse/**
+          globalcors:
+            # Ensures preflight OPTIONS requests are handled by the gateway's CORS
+            # filter instead of being routed downstream (the cause of the missing
+            # Access-Control-Allow-Origin header on preflight).
+            add-to-simple-url-handler-mapping: true
+            corsConfigurations:
+              '[/**]':
+                # allowedOriginPatterns (not allowedOrigins) so credentialed
+                # requests are allowed — "*" + allowCredentials is invalid and
+                # makes Spring drop the ACAO header entirely.
+                allowedOriginPatterns:
+                  - "http://localhost:4200"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+
+eureka:
+  client:
+    service-url:
+      # Eureka server runs on 8080 (see eureka-server/application.properties).
+      # This MUST match, otherwise lb://MEDICAL-SERVICE / lb://MMSE-SERVICE never resolve
+      # and the gateway returns 503 for every /api/** call.
+      defaultZone: http://localhost:8080/eureka

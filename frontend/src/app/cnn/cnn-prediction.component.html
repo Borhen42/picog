@@ -1,0 +1,166 @@
+<div class="cnn-container">
+  <div class="cnn-header">
+    <h1>AI Brain Scan Analysis</h1>
+    <p>Upload MRI/CT brain scan images for AI-powered Alzheimer's detection</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-error">
+    <span class="alert-icon">⚠️</span>
+    <span>{{ error }}</span>
+    <button class="alert-close" (click)="error = null">×</button>
+  </div>
+
+  <!-- Success Alert -->
+  <div *ngIf="success" class="alert alert-success">
+    <span class="alert-icon">✓</span>
+    <span>{{ success }}</span>
+    <button class="alert-close" (click)="success = null">×</button>
+  </div>
+
+  <div class="cnn-main">
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <div class="upload-box">
+        <div class="upload-icon">🧠</div>
+        <h2>Upload Brain Scan</h2>
+        <p>Supported formats: JPG, PNG, DICOM</p>
+        
+        <label for="fileInput" class="file-label">
+          <span class="file-button">Choose Image</span>
+          <input 
+            type="file" 
+            id="fileInput" 
+            accept="image/*,.dcm"
+            (change)="onFileSelected($event)"
+            hidden
+          />
+        </label>
+
+        <div *ngIf="previewUrl" class="preview-container">
+          <h3>Preview</h3>
+          <img [src]="previewUrl" alt="Preview" class="preview-image" />
+        </div>
+
+        <div class="button-group">
+          <button 
+            class="btn btn-primary" 
+            (click)="uploadAndPredict()"
+            [disabled]="!selectedFile || loading"
+          >
+            <span *ngIf="!loading">🚀 Analyze Image</span>
+            <span *ngIf="loading" class="loading-button-content">
+              <span class="spinner-small"></span>
+              {{ loadingStage || 'Analyzing...' }}
+            </span>
+          </button>
+          <button 
+            class="btn btn-secondary" 
+            (click)="resetPrediction()"
+            [disabled]="loading"
+          >
+            Reset
+          </button>
+        </div>
+
+        <!-- Loading Progress Bar -->
+        <div *ngIf="loading" class="loading-progress-container">
+          <div class="loading-progress-bar">
+            <div class="loading-progress-fill" [style.width.%]="loadingProgress"></div>
+          </div>
+          <p class="loading-progress-text">{{ loadingProgress }}% - {{ loadingStage }}</p>
+        </div>
+
+        <!-- Loading Skeleton (shown while loading) -->
+        <div *ngIf="loading && !prediction" class="loading-skeleton">
+          <div class="skeleton-card">
+            <div class="skeleton-header"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-line skeleton-line-large"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line skeleton-line-medium"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div *ngIf="prediction" class="results-section">
+      <div class="results-box">
+        <h2>Analysis Results</h2>
+        
+        <div class="result-card" [ngClass]="getRiskClass(prediction.diagnosis)">
+          <div class="diagnosis-label">Diagnosis</div>
+          <div class="diagnosis-value">{{ prediction.diagnosis }}</div>
+          <div class="confidence">
+            Confidence: {{ (prediction.confidence * 100).toFixed(1) }}%
+          </div>
+        </div>
+
+        <div class="analysis-details">
+          <h3>Detailed Analysis</h3>
+          
+          <div class="detail-item">
+            <span class="detail-label">Model Used:</span>
+            <span class="detail-value">{{ prediction.model || 'CNN 3-Class' }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Processing Time:</span>
+            <span class="detail-value">{{ prediction.processingTime || '2.3s' }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Image Quality:</span>
+            <span class="detail-value">{{ prediction.imageQuality || 'Good' }}</span>
+          </div>
+
+          <div *ngIf="prediction.recommendations" class="recommendations">
+            <h4>Recommendations</h4>
+            <ul>
+              <li *ngFor="let rec of prediction.recommendations">{{ rec }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="score-breakdown" *ngIf="prediction.scores">
+          <h3>Score Distribution</h3>
+          <div class="scores-grid">
+            <div *ngFor="let score of prediction.scores" class="score-item">
+              <div class="score-label">{{ score.label }}</div>
+              <div class="score-bar">
+                <div 
+                  class="score-fill" 
+                  [style.width.%]="score.value * 100"
+                  [ngClass]="'level-' + score.level"
+                ></div>
+              </div>
+              <div class="score-value">{{ (score.value * 100).toFixed(1) }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div *ngIf="!prediction" class="info-section">
+
+      <div class="info-card">
+        <h3>🎯 Supported Conditions</h3>
+        <ul>
+          <li>Normal Cognition</li>
+          <li>Mild Cognitive Impairment</li>
+          <li>Moderate Dementia</li>
+          <li>Severe Alzheimer's Disease</li>
+        </ul>
+      </div>
+
+      <div class="info-card">
+        <h3>⚠️ Disclaimer</h3>
+        <p>This AI tool is for screening purposes only and should not be used as a definitive diagnosis. 
+           Always consult with qualified healthcare professionals for medical advice.</p>
+      </div>
+    </div>
+  </div>
+</div>

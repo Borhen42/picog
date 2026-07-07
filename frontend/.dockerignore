@@ -1,0 +1,12 @@
+node_modules
+dist
+out-tsc
+.angular
+.git
+.gitignore
+*.log
+Dockerfile
+.dockerignore
+docker-compose.yml
+.vscode
+.idea

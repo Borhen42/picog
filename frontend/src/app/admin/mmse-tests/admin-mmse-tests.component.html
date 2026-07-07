@@ -1,0 +1,65 @@
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>📋 MMSE Tests</h1>
+      <p class="sub">All submitted MMSE results (independent from user matching).</p>
+    </div>
+    <div class="actions">
+      <a class="btn" routerLink="/admin">← Back to Dashboard</a>
+      <button class="btn primary" (click)="load()">Refresh</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" [(ngModel)]="query" placeholder="Search by patient name or notes..." />
+    <div class="count">{{ filtered.length }} result(s)</div>
+  </div>
+
+  <div *ngIf="loading" class="state">
+    <div class="spinner"></div>
+    <div>Loading MMSE tests…</div>
+  </div>
+
+  <div *ngIf="error && !loading" class="state error">
+    <div class="icon">⚠️</div>
+    <div>{{ error }}</div>
+    <button class="btn primary" (click)="load()">Try again</button>
+  </div>
+
+  <div *ngIf="!loading && !error && filtered.length === 0" class="state empty">
+    <div class="icon">📭</div>
+    <div>No MMSE tests found.</div>
+  </div>
+
+  <div *ngIf="!loading && !error && filtered.length > 0" class="table">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Score</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of filtered">
+          <td class="patient">
+            <div class="name">{{ t.patientName || '—' }}</div>
+          </td>
+          <td class="score">
+            <span class="scoreNum">{{ t.totalScore ?? '—' }}</span><span class="scoreTot">/30</span>
+          </td>
+          <td>
+            <span class="care" [ngClass]="getCareClass(scoreOf(t))">
+              {{ getCareLabel(scoreOf(t)) }}
+            </span>
+          </td>
+          <td>{{ t.testDate ? (t.testDate | date:'MMM d, yyyy') : '—' }}</td>
+          <td class="notes">{{ t.notes || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+

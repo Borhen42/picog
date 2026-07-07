@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: cognivita
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway
+          ports:
+            - containerPort: 8093
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://eureka-server:8080/eureka/
+            # Register in Eureka by pod IP (routable via Flannel) rather than pod
+            # hostname, so the gateway's lb://MEDICAL-SERVICE routes actually resolve.
+            - name: EUREKA_INSTANCE_PREFERIPADDRESS
+              value: "true"
+          readinessProbe:
+            tcpSocket:
+              port: 8093
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8093
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway                 # the frontend nginx proxies /api here
+  namespace: cognivita
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8093
+      targetPort: 8093

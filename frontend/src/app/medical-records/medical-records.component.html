@@ -1,0 +1,669 @@
+<div class="medical-records-page">
+  <!-- 3D Brain Background -->
+  <div class="brain-background">
+    <app-brain3d></app-brain3d>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-icon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          <path d="M12 3v2m0 14v2M3 12H1m22 0h-2"/>
+        </svg>
+      </div>
+      <h1>Medical Records</h1>
+      <p>Complete Patient Clinical Documentation System</p>
+      <button class="btn-primary" (click)="openCreateForm()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14m-7-7h14"/>
+        </svg>
+        Create New Record
+      </button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ records.length }}</span>
+        <span class="stat-label">Total Records</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ getHighRiskCount() }}</span>
+        <span class="stat-label">Family History</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ getAverageAge() }}</span>
+        <span class="stat-label">Avg. Age</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="medical-loader">
+      <div class="pulse-ring"></div>
+      <svg class="heart-icon" width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+    </div>
+    <p>Loading medical records...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 8v4m0 4h.01"/>
+    </svg>
+    <h3>Unable to Load Records</h3>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadRecords()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      Try Again
+    </button>
+  </div>
+
+  <!-- Records List -->
+  <div *ngIf="!loading && records.length > 0" class="records-section">
+    <div class="section-header">
+      <h2>Patient Files</h2>
+      <div class="view-controls">
+        <span class="records-count">{{ records.length }} records found</span>
+      </div>
+    </div>
+
+    <div class="fiche-grid">
+      <article *ngFor="let record of records" class="fiche-medicale" (click)="viewRecord(record)">
+        <!-- Fiche Header with Patient Photo placeholder -->
+        <div class="fiche-header">
+          <div class="patient-photo">
+            <span class="initials">{{ getInitials(record.userName) }}</span>
+            <div class="gender-indicator" [ngClass]="record.gender.toLowerCase()">
+              {{ record.gender === 'Male' ? '♂' : record.gender === 'Female' ? '♀' : '⚧' }}
+            </div>
+          </div>
+          <div class="patient-identity">
+            <h3 class="patient-name">{{ record.userName || record.userEmail || ('User #' + record.userId) }}</h3>
+            <span class="patient-id">ID: #{{ record.id | number:'3.0-0' }}</span>
+          </div>
+          <div class="risk-indicator" [ngClass]="getRiskClass(record.familyHistory)">
+            <svg *ngIf="record.familyHistory === 'Yes'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L1 21h22L12 2zm0 4l7.53 13H4.47L12 6zm-1 4v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+            </svg>
+            <span>{{ record.familyHistory === 'Yes' ? 'At Risk' : 'Low Risk' }}</span>
+          </div>
+        </div>
+
+        <!-- Vital Information -->
+        <div class="fiche-body">
+          <div class="info-grid">
+            <div class="info-cell">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <div>
+                <span class="info-label">Age</span>
+                <span class="info-value">{{ record.age }} years</span>
+              </div>
+            </div>
+            <div class="info-cell">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+              <div>
+                <span class="info-label">Education</span>
+                <span class="info-value">{{ record.educationLevel || 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clinical Notes Preview -->
+          <div class="clinical-section">
+            <div class="clinical-item symptoms">
+              <div class="clinical-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>Symptoms</span>
+              </div>
+              <p>{{ (record.currentSymptoms | slice:0:80) || 'Not documented' }}{{ record.currentSymptoms && record.currentSymptoms.length > 80 ? '...' : '' }}</p>
+            </div>
+
+            <div class="clinical-item risks">
+              <div class="clinical-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Risk Factors</span>
+              </div>
+              <p>{{ (record.riskFactors | slice:0:60) || 'Not documented' }}{{ record.riskFactors && record.riskFactors.length > 60 ? '...' : '' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fiche Footer -->
+        <div class="fiche-footer">
+          <div class="date-stamp">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ formatDate(record.createdAt) }}
+          </div>
+          <button class="btn-view-details">
+            View Full Record
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14m-7-7l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && records.length === 0 && !error" class="empty-container">
+    <div class="empty-illustration">
+      <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+    </div>
+    <h3>No Medical Records Yet</h3>
+    <p>Start building your patient database by creating the first clinical record</p>
+    <button class="btn-primary large" (click)="openCreateForm()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14m-7-7h14"/>
+      </svg>
+      Create First Record
+    </button>
+  </div>
+
+  <!-- Detail Modal -->
+  <div *ngIf="selectedRecord && !showForm" class="modal-backdrop" (click)="closeDetails()">
+    <div class="detail-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeDetails()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <!-- Medical Fiche Detail View -->
+      <div class="fiche-detail">
+        <header class="detail-header">
+          <div class="patient-profile">
+            <div class="profile-avatar" [ngClass]="selectedRecord.gender.toLowerCase()">
+              {{ getInitials(selectedRecord.userName) }}
+            </div>
+            <div class="profile-info">
+              <h2>{{ selectedRecord.userName || selectedRecord.userEmail || ('User #' + selectedRecord.userId) }}</h2>
+              <div class="profile-meta">
+                <span class="meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  {{ selectedRecord.userEmail }}
+                </span>
+                <span class="meta-item">Record #{{ selectedRecord.id }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="header-badge" [ngClass]="getRiskClass(selectedRecord.familyHistory)">
+            {{ selectedRecord.familyHistory === 'Yes' ? '⚠️ Family History Present' : '✓ No Family History' }}
+          </div>
+        </header>
+
+        <div class="detail-content">
+          <!-- Demographics Section -->
+          <section class="detail-section demographics">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/>
+              </svg>
+              Demographics
+            </h4>
+            <div class="data-grid">
+              <div class="data-item">
+                <label>Age</label>
+                <span>{{ selectedRecord.age }} years old</span>
+              </div>
+              <div class="data-item">
+                <label>Gender</label>
+                <span>{{ selectedRecord.gender }}</span>
+              </div>
+              <div class="data-item">
+                <label>Education Level</label>
+                <span>{{ selectedRecord.educationLevel || 'Not specified' }}</span>
+              </div>
+              <div class="data-item">
+                <label>Family History</label>
+                <span [ngClass]="getRiskClass(selectedRecord.familyHistory)">
+                  {{ selectedRecord.familyHistory }}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Risk Factors Section -->
+          <section class="detail-section risks">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Risk Factors
+            </h4>
+            <div class="text-content risk-content">
+              {{ selectedRecord.riskFactors || 'No risk factors documented' }}
+            </div>
+          </section>
+
+          <!-- Symptoms Section -->
+          <section class="detail-section symptoms">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              Current Symptoms
+            </h4>
+            <div class="text-content symptom-content">
+              {{ selectedRecord.currentSymptoms || 'No symptoms reported' }}
+            </div>
+          </section>
+
+          <!-- Diagnosis Notes Section -->
+          <section class="detail-section diagnosis">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Diagnosis Notes
+            </h4>
+            <div class="text-content diagnosis-content">
+              {{ selectedRecord.diagnosisNotes || 'No diagnosis notes available' }}
+            </div>
+          </section>
+
+          <!-- AI Case Summary Section -->
+          <section class="detail-section ai-summary">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+                <path d="M5 17l.9 2.1L8 20l-2.1.9L5 23l-.9-2.1L2 20l2.1-.9L5 17z"/>
+              </svg>
+              AI Case Summary
+            </h4>
+            <p class="ai-hint">
+              Generate a plain-language summary of this patient's entire case — every consultation and
+              cognitive test — using AI to support your clinical review.
+            </p>
+            <button class="btn-ai" (click)="generateSummary()" [disabled]="aiLoading">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+              </svg>
+              {{ aiLoading ? 'Analyzing case…' : (aiSummary ? 'Regenerate Summary' : 'Summarize Patient Case') }}
+            </button>
+
+            <div *ngIf="aiLoading" class="ai-loading">
+              <div class="ai-spinner"></div>
+              <span>Contacting the AI model, this can take a few seconds…</span>
+            </div>
+
+            <div *ngIf="aiError && !aiLoading" class="ai-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <span>{{ aiError }}</span>
+            </div>
+
+            <div *ngIf="aiSummary && !aiLoading" class="ai-result">
+              <div class="ai-result-text">{{ aiSummary }}</div>
+              <div class="ai-meta" *ngIf="aiGeneratedAt">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Generated {{ formatDateTime(aiGeneratedAt) }}
+              </div>
+            </div>
+          </section>
+
+          <!-- Consultations Section -->
+          <section class="detail-section consultations">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+              Consultations
+              <span class="count-badge">{{ consultations.length }}</span>
+              <button class="btn-add-inline" (click)="openAddConsultation()" *ngIf="!showConsultationForm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Add
+              </button>
+            </h4>
+
+            <!-- Inline add/edit consultation form -->
+            <div *ngIf="showConsultationForm" class="consultation-form">
+              <div class="cf-title">{{ isEditingConsultation ? 'Edit consultation' : 'New consultation' }}</div>
+              <div class="cf-row">
+                <div class="cf-group">
+                  <label>Date &amp; time</label>
+                  <input type="datetime-local" [(ngModel)]="consultationForm.consultationDate" name="cfDate">
+                </div>
+                <div class="cf-group">
+                  <label>Risk level</label>
+                  <select [(ngModel)]="consultationForm.riskLevel" name="cfRisk">
+                    <option [ngValue]="null">— none —</option>
+                    <option *ngFor="let r of riskLevels" [ngValue]="r">{{ r }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="cf-group">
+                <label>Symptoms</label>
+                <textarea rows="2" [(ngModel)]="consultationForm.symptoms" name="cfSymptoms"
+                          placeholder="Reported symptoms during this visit…"></textarea>
+              </div>
+              <div class="cf-group">
+                <label>Observations</label>
+                <textarea rows="2" [(ngModel)]="consultationForm.observations" name="cfObs"
+                          placeholder="Clinical observations…"></textarea>
+              </div>
+              <div class="cf-group">
+                <label>Diagnosis</label>
+                <textarea rows="2" [(ngModel)]="consultationForm.diagnosis" name="cfDiag"
+                          placeholder="Diagnosis / impression…"></textarea>
+              </div>
+              <div class="cf-group">
+                <label>Recommendations</label>
+                <textarea rows="2" [(ngModel)]="consultationForm.recommendations" name="cfRec"
+                          placeholder="Treatment plan and next steps…"></textarea>
+              </div>
+              <div class="cf-row">
+                <div class="cf-group">
+                  <label>Confidence (0–1, optional)</label>
+                  <input type="number" min="0" max="1" step="0.01"
+                         [(ngModel)]="consultationForm.confidenceScore" name="cfConf" placeholder="e.g. 0.85">
+                </div>
+                <div class="cf-group">
+                  <label>Doctor ID (optional)</label>
+                  <input type="number" [(ngModel)]="consultationForm.doctorId" name="cfDoc" placeholder="e.g. 1">
+                </div>
+              </div>
+
+              <div *ngIf="consultationError" class="cf-error">{{ consultationError }}</div>
+
+              <div class="cf-actions">
+                <button type="button" class="btn-cancel-sm" (click)="closeConsultationForm()">Cancel</button>
+                <button type="button" class="btn-save-sm" (click)="submitConsultation()">
+                  {{ isEditingConsultation ? 'Update' : 'Save consultation' }}
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="consultationsLoading" class="mini-loading">Loading consultations…</div>
+            <div *ngIf="!consultationsLoading && consultations.length === 0 && !showConsultationForm" class="mini-empty">
+              No consultations recorded yet. Add the first one to start the patient's timeline.
+            </div>
+
+            <div class="consultation-list" *ngIf="consultations.length > 0">
+              <div class="consultation-card" *ngFor="let c of consultations">
+                <div class="consultation-head">
+                  <span class="consultation-date">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    {{ formatDateTime(c.consultationDate) }}
+                  </span>
+                  <span class="risk-pill" [ngClass]="riskLevelClass(c.riskLevel)" *ngIf="c.riskLevel">{{ c.riskLevel }}</span>
+                  <span class="consultation-actions">
+                    <button class="icon-btn" title="Edit" (click)="openEditConsultation(c)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="icon-btn danger" title="Delete" (click)="deleteConsultation(c)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="consultation-body">
+                  <p *ngIf="c.symptoms"><span class="cb-label">Symptoms</span>{{ c.symptoms }}</p>
+                  <p *ngIf="c.observations"><span class="cb-label">Observations</span>{{ c.observations }}</p>
+                  <p *ngIf="c.diagnosis"><span class="cb-label">Diagnosis</span>{{ c.diagnosis }}</p>
+                  <p *ngIf="c.recommendations"><span class="cb-label">Recommendations</span>{{ c.recommendations }}</p>
+                  <p *ngIf="c.confidenceScore != null" class="cb-confidence">
+                    Confidence: {{ ((c.confidenceScore || 0) * 100) | number:'1.0-0' }}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- MMSE Cognitive Tests Section -->
+          <section class="detail-section mmse-tests">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9.5 2A2.5 2.5 0 0112 4.5v15a2.5 2.5 0 01-4.96.44A2.5 2.5 0 013 17.5v-11A2.5 2.5 0 015.5 4"/>
+                <path d="M14.5 2A2.5 2.5 0 0012 4.5v15a2.5 2.5 0 004.96.44A2.5 2.5 0 0021 17.5v-11A2.5 2.5 0 0018.5 4"/>
+              </svg>
+              Cognitive Tests (MMSE)
+              <span class="count-badge">{{ mmseTests.length }}</span>
+            </h4>
+
+            <div *ngIf="mmseLoading" class="mini-loading">Loading tests…</div>
+            <div *ngIf="!mmseLoading && mmseTests.length === 0" class="mini-empty">
+              No MMSE tests are linked to this medical record.
+            </div>
+
+            <div class="mmse-list" *ngIf="mmseTests.length > 0">
+              <div class="mmse-card" *ngFor="let t of mmseTests">
+                <div class="mmse-score" [ngClass]="mmseScoreClass(t.totalScore)">
+                  <span class="mmse-value">{{ t.totalScore }}</span>
+                  <span class="mmse-max">/30</span>
+                </div>
+                <div class="mmse-info">
+                  <div class="mmse-interpretation">{{ t.interpretation }}</div>
+                  <div class="mmse-date">{{ formatDate(t.testDate) }}</div>
+                  <div class="mmse-breakdown">
+                    <span title="Orientation">O {{ t.orientationScore }}</span>
+                    <span title="Registration">Rg {{ t.registrationScore }}</span>
+                    <span title="Attention">At {{ t.attentionScore }}</span>
+                    <span title="Recall">Rc {{ t.recallScore }}</span>
+                    <span title="Language">Lg {{ t.languageScore }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Timeline -->
+          <section class="detail-section timeline">
+            <h4>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Record Timeline
+            </h4>
+            <div class="timeline-items">
+              <div class="timeline-item">
+                <span class="timeline-dot created"></span>
+                <div class="timeline-content">
+                  <span class="timeline-label">Created</span>
+                  <span class="timeline-date">{{ formatDate(selectedRecord.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="timeline-item" *ngIf="selectedRecord.updatedAt">
+                <span class="timeline-dot updated"></span>
+                <div class="timeline-content">
+                  <span class="timeline-label">Last Updated</span>
+                  <span class="timeline-date">{{ formatDate(selectedRecord.updatedAt) }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="detail-footer">
+          <button class="btn-secondary" (click)="openEditForm(selectedRecord)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Record
+          </button>
+          <button class="btn-danger" (click)="deleteRecord(selectedRecord.id)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+            </svg>
+            Delete
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Form Modal -->
+  <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
+    <div class="form-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeForm()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="form-header">
+        <div class="form-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h2>{{ isEditing ? 'Update Medical Record' : 'New Medical Record' }}</h2>
+        <p>{{ isEditing ? 'Modify patient clinical information' : 'Create a new patient clinical file' }}</p>
+      </div>
+
+      <form (ngSubmit)="submitForm()" class="medical-form">
+        <div class="form-section">
+          <h5>Patient Information</h5>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="userId">User ID <span class="required">*</span></label>
+              <input type="number" id="userId" [(ngModel)]="formData.userId" name="userId" 
+                     required [disabled]="isEditing" placeholder="Enter user ID">
+            </div>
+            <div class="form-group">
+              <label for="age">Age <span class="required">*</span></label>
+              <input type="number" id="age" [(ngModel)]="formData.age" name="age" 
+                     required min="0" max="150" placeholder="Years">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="gender">Gender <span class="required">*</span></label>
+              <select id="gender" [(ngModel)]="formData.gender" name="gender" required>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="education">Education Level</label>
+              <select id="education" [(ngModel)]="formData.educationLevel" name="educationLevel">
+                <option value="">Select education</option>
+                <option value="No Formal Education">No Formal Education</option>
+                <option value="Primary School">Primary School</option>
+                <option value="High School">High School</option>
+                <option value="Bachelor Degree">Bachelor Degree</option>
+                <option value="Master Degree">Master Degree</option>
+                <option value="Doctorate">Doctorate</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h5>Medical History</h5>
+          <div class="form-group">
+            <label>Family History of Alzheimer's Disease</label>
+            <div class="radio-buttons">
+              <label class="radio-btn" [class.selected]="formData.familyHistory === 'Yes'">
+                <input type="radio" [(ngModel)]="formData.familyHistory" name="familyHistory" value="Yes">
+                <span class="radio-icon warning">⚠️</span>
+                <span>Yes</span>
+              </label>
+              <label class="radio-btn" [class.selected]="formData.familyHistory === 'No'">
+                <input type="radio" [(ngModel)]="formData.familyHistory" name="familyHistory" value="No">
+                <span class="radio-icon success">✓</span>
+                <span>No</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="riskFactors">Risk Factors</label>
+            <textarea id="riskFactors" [(ngModel)]="formData.riskFactors" name="riskFactors" 
+                      rows="3" placeholder="e.g., Hypertension, Diabetes, Cardiovascular disease, Smoking..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h5>Clinical Assessment</h5>
+          <div class="form-group">
+            <label for="symptoms">Current Symptoms</label>
+            <textarea id="symptoms" [(ngModel)]="formData.currentSymptoms" name="currentSymptoms" 
+                      rows="3" placeholder="e.g., Memory loss, confusion, difficulty with familiar tasks..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="diagnosis">Diagnosis Notes</label>
+            <textarea id="diagnosis" [(ngModel)]="formData.diagnosisNotes" name="diagnosisNotes" 
+                      rows="4" placeholder="Clinical observations, recommendations, and treatment plan..."></textarea>
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        <div *ngIf="error" class="form-error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          {{ error }}
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeForm()">Cancel</button>
+          <button type="button" class="btn-submit" (click)="submitForm()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            {{ isEditing ? 'Update Record' : 'Save Record' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

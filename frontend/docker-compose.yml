@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cognivita-frontend:latest
+    container_name: cognivita-frontend
+    ports:
+      # Browse the app at http://localhost:4200
+      - "4200:80"
+    networks:
+      - shared_network
+    restart: unless-stopped
+
+networks:
+  shared_network:
+    external: true

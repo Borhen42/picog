@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mmse-config
+  namespace: cognivita
+data:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mmse-mysql:3306/mmse_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_USERNAME: "root"
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8080/eureka/"
+  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mmse-service
+  namespace: cognivita
+  labels:
+    app: mmse-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mmse-service
+  template:
+    metadata:
+      labels:
+        app: mmse-service
+    spec:
+      containers:
+        - name: mmse-service
+          image: mmse-service
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: mmse-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mmse-db-secret
+                  key: mysql-root-password
+          readinessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mmse-service
+  namespace: cognivita
+spec:
+  selector:
+    app: mmse-service
+  ports:
+    - port: 8085
+      targetPort: 8085

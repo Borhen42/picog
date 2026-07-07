@@ -1,0 +1,25 @@
+# Wave 1 — service registry. Up before the clients so they can register.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eureka-server
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cognivita
+  source:
+    repoURL: https://github.com/Borhen42/pi-cognitive.git
+    targetRevision: main
+    path: k8s/apps/eureka-server
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cognivita
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

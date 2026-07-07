@@ -1,0 +1,386 @@
+<div class="mmse-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🧠 MMSE Test - Mini-Mental State Examination</h1>
+    <p class="subtitle">Cognitive Assessment for Alzheimer Detection</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-error">
+    <strong>Error:</strong> {{ error }}
+  </div>
+
+  <!-- Success Alert -->
+  <div *ngIf="success" class="alert alert-success">
+    <strong>Success!</strong> {{ success }}
+  </div>
+
+  <!-- Intro Section -->
+  <div *ngIf="currentSection === 'intro'" class="section">
+    <div class="intro-card">
+      <h2>Welcome to MMSE Test</h2>
+      <p>
+        This MMSE is presented as a <strong>multiple‑choice test</strong>. For each question, select the best answer.
+        Each correct answer adds points to the total score (out of 30).
+      </p>
+      <ul class="test-categories">
+        <li><strong>Orientation to Time:</strong> 5 points</li>
+        <li><strong>Orientation to Place:</strong> 5 points</li>
+        <li><strong>Registration:</strong> 3 points</li>
+        <li><strong>Attention & Calculation:</strong> 5 points</li>
+        <li><strong>Recall:</strong> 3 points</li>
+        <li><strong>Language:</strong> 8 points</li>
+        <li><strong>Visual-Spatial:</strong> 1 point</li>
+      </ul>
+
+      <div class="patient-info">
+        <label>Patient Name:</label>
+        <input type="text" [(ngModel)]="patientName" placeholder="Enter patient full name" class="input-field">
+
+        <label>Test Date:</label>
+        <input type="date" [(ngModel)]="testDate" class="input-field">
+
+        <label>Notes (Optional):</label>
+        <textarea [(ngModel)]="notes" placeholder="Additional notes about the patient..." class="input-field"></textarea>
+      </div>
+
+      <div class="patient-info">
+        <h3 class="subhead">Test location (needed for “Orientation to Place”)</h3>
+        <div class="grid-2">
+          <div>
+            <label>State:</label>
+            <input type="text" [(ngModel)]="context.state" placeholder="e.g., Tunis" class="input-field">
+          </div>
+          <div>
+            <label>County:</label>
+            <input type="text" [(ngModel)]="context.county" placeholder="e.g., Ariana" class="input-field">
+          </div>
+          <div>
+            <label>City:</label>
+            <input type="text" [(ngModel)]="context.city" placeholder="e.g., La Marsa" class="input-field">
+          </div>
+          <div>
+            <label>Building:</label>
+            <input type="text" [(ngModel)]="context.building" placeholder="e.g., Hospital" class="input-field">
+          </div>
+          <div>
+            <label>Floor:</label>
+            <input type="text" [(ngModel)]="context.floor" placeholder="e.g., 2" class="input-field">
+          </div>
+        </div>
+        <p class="hint">These values are used as the correct answers for the place section.</p>
+      </div>
+
+      <button (click)="startTest()" class="btn btn-primary btn-large">
+        Start Test
+      </button>
+
+      <div class="instructions">
+        <p>📋 <strong>Instructions:</strong></p>
+        <p>Answer all questions carefully. Each correct answer is marked. Your total score out of 30 determines the cognitive status.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orientation to Time Section -->
+  <div *ngIf="currentSection === 'orientation-time'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 15%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>🕐 Orientation to Time (5 points)</h2>
+      <p class="section-desc">Ask the patient to state the date and day of the week.</p>
+
+      <div class="question-group">
+        <div class="mcq" *ngFor="let q of getQuestions('orientation-time')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('orientation-place')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orientation to Place Section -->
+  <div *ngIf="currentSection === 'orientation-place'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 30%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>📍 Orientation to Place (5 points)</h2>
+      <p class="section-desc">Ask the patient to identify the location details.</p>
+
+      <div class="question-group">
+        <div class="mcq" *ngFor="let q of getQuestions('orientation-place')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('orientation-time')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="nextSection('registration')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Section -->
+  <div *ngIf="currentSection === 'registration'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 45%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>📝 Registration (3 points)</h2>
+      <p class="section-desc">Tell the patient you will say three words and ask him/her to repeat them at the end: Apple, Penny, Table. Say them clearly and at about one-second intervals.</p>
+
+      <div class="question-group">
+        <div class="mcq" *ngFor="let q of getQuestions('registration')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('orientation-place')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="nextSection('attention-calculation')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attention and Calculation Section -->
+  <div *ngIf="currentSection === 'attention-calculation'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 60%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>🧮 Attention and Calculation (5 points)</h2>
+      <p class="section-desc">Ask the patient to count backward from 100 by sevens. Stop after five answers (93, 86, 79, 72, 65).</p>
+
+      <div class="question-group">
+        <div class="mcq" *ngFor="let q of getQuestions('attention-calculation')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('registration')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="nextSection('recall')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recall Section -->
+  <div *ngIf="currentSection === 'recall'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 75%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>🧠 Recall (3 points)</h2>
+      <p class="section-desc">Ask the patient to recall the three words you mentioned earlier (Apple, Penny, Table).</p>
+
+      <div class="question-group">
+        <div class="mcq" *ngFor="let q of getQuestions('recall')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('attention-calculation')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="nextSection('language')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Language Section -->
+  <div *ngIf="currentSection === 'language'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 90%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>🗣️ Language (8 points)</h2>
+      <p class="section-desc">Test the patient's language abilities through naming, repetition, and comprehension.</p>
+
+      <div class="question-group">
+        <p class="command-text">
+          3‑stage command reference: “Take a piece of paper in your right hand, fold it in half, and put it on the floor”
+        </p>
+
+        <div class="mcq" *ngFor="let q of getQuestions('language')">
+          <div class="q-text">{{ q.text }}</div>
+          <label class="option-label" *ngFor="let opt of q.options">
+            <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+            <span class="label-text">{{ opt.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('recall')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="nextSection('visual-spatial')" class="btn btn-primary">
+          Next Section →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual-Spatial Section -->
+  <div *ngIf="currentSection === 'visual-spatial'" class="section">
+    <div class="progress-bar">
+      <div class="progress" style="width: 100%"></div>
+    </div>
+
+    <div class="test-card">
+      <h2>✏️ Visual-Spatial (1 point)</h2>
+      <p class="section-desc">Ask the patient to copy the design shown. Award 1 point for correctly intersecting pentagons.</p>
+
+      <div class="visual-section">
+        <div class="pentagon-demo">
+          <p>Reference Design (Two Intersecting Pentagons):</p>
+          <svg viewBox="0 0 200 150" class="pentagon-svg">
+            <!-- Pentagon 1 -->
+            <polygon points="100,20 130,60 115,110 85,110 70,60" fill="none" stroke="#667eea" stroke-width="2"/>
+            <!-- Pentagon 2 -->
+            <polygon points="120,40 150,80 135,130 105,130 90,80" fill="none" stroke="#764ba2" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <div class="question-group">
+          <div class="mcq" *ngFor="let q of getQuestions('visual-spatial')">
+            <div class="q-text">{{ q.text }}</div>
+            <label class="option-label" *ngFor="let opt of q.options">
+              <input type="radio" [name]="q.id" [value]="opt.value" [(ngModel)]="answers[q.id]">
+              <span class="label-text">{{ opt.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="nextSection('language')" class="btn btn-secondary">
+          ← Previous
+        </button>
+        <button (click)="submitTest()" [disabled]="loading" class="btn btn-success btn-large">
+          <span *ngIf="!loading">📊 Submit Test</span>
+          <span *ngIf="loading">Submitting... (Score: {{ totalScore }}/30)</span>
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="submitting-banner">
+        Current score: <strong>{{ totalScore }}/30</strong> — {{ getInterpretation(totalScore) }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Section -->
+  <div *ngIf="currentSection === 'result'" class="section">
+    <div class="result-card" [ngClass]="getInterpretation(totalScore).toLowerCase().replace(/\s+/g, '-')">
+      <h2>📋 Test Complete</h2>
+      
+      <div class="score-display">
+        <div class="score-circle">
+          <span class="score-number">{{ totalScore }}</span>
+          <span class="score-total">/30</span>
+        </div>
+      </div>
+
+      <div class="result-interpretation" [ngClass]="'result-' + (totalScore >= 24 ? 'normal' : totalScore >= 18 ? 'mild' : totalScore >= 12 ? 'moderate' : 'severe')">
+        <h3>{{ getInterpretation(totalScore) }}</h3>
+        <p *ngIf="totalScore >= 24">✅ Normal cognitive function. No significant impairment detected.</p>
+        <p *ngIf="totalScore >= 18 && totalScore < 24">⚠️ Mild cognitive impairment. May benefit from further evaluation.</p>
+        <p *ngIf="totalScore >= 12 && totalScore < 18">⚠️ Moderate cognitive impairment. Professional evaluation recommended.</p>
+        <p *ngIf="totalScore < 12">🚨 Severe cognitive impairment. Immediate professional intervention recommended.</p>
+      </div>
+
+      <div class="score-breakdown">
+        <h4>Score Breakdown:</h4>
+        <div class="breakdown-grid">
+          <div class="breakdown-item">
+            <span>Orientation (Time & Place):</span>
+            <strong>{{ getOrientationScore() }}/10</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Registration:</span>
+            <strong>{{ getRegistrationScore() }}/3</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Attention & Calculation:</span>
+            <strong>{{ getAttentionScore() }}/5</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Recall:</span>
+            <strong>{{ getRecallScore() }}/3</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Language:</span>
+            <strong>{{ getLanguageScore() }}/8</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Visual-Spatial:</span>
+            <strong>{{ getVisualScore() }}/1</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-patient-info">
+        <p><strong>Patient:</strong> {{ patientName }}</p>
+        <p><strong>Test Date:</strong> {{ testDate }}</p>
+        <p *ngIf="notes"><strong>Notes:</strong> {{ notes }}</p>
+      </div>
+
+      <div class="button-group">
+        <button (click)="resetTest()" class="btn btn-primary btn-large">
+          Take Another Test
+        </button>
+        <button (click)="goHome()" class="btn btn-secondary btn-large">
+          Back to Home
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Shared infrastructure for the cognivita namespace: the namespace itself, the DB
+# credential secrets, and one MySQL instance per data-owning service.
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - medical-mysql.yaml
+  - mmse-mysql.yaml
+  # - keycloak.yaml     # optional in-cluster SSO — see the file header + k8s/README.md
+
+# NOTE: secrets.example.yaml (Azure AI key) is intentionally omitted — create it
+# manually so the real key never lands in git.

@@ -1,0 +1,28 @@
+name: CI · apiGateway
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Backend/apiGateway/**"
+      - ".github/workflows/ci-apigateway.yml"
+      - ".github/workflows/_reusable-backend.yml"
+  pull_request:
+    paths:
+      - "Backend/apiGateway/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-apigateway-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_reusable-backend.yml
+    with:
+      service_dir: apiGateway
+      image_name: api-gateway
+      manifest_dir: k8s/apps/apigateway
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

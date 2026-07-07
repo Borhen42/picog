@@ -1,0 +1,47 @@
+services:
+  medical-mysql:
+    image: mysql:8.0
+    container_name: medical-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=medical_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - medical_mysql_data:/var/lib/mysql
+    networks:
+      - shared_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  medical-service:
+    build: .
+    image: medical-service:latest
+    container_name: medical-service
+    depends_on:
+      medical-mysql:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8080/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://medical-mysql:3306/medical_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root123
+
+      # Azure AI config
+      - AZURE_AI_ENDPOINT=${AZURE_AI_ENDPOINT}
+      - AZURE_AI_DEPLOYMENT=${AZURE_AI_DEPLOYMENT}
+      - AZURE_AI_API_KEY=${AZURE_AI_API_KEY}
+    ports:
+      - "8083:8083"
+    networks:
+      - shared_network
+
+volumes:
+  medical_mysql_data:
+
+networks:
+  shared_network:
+    external: true

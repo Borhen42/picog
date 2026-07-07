@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -version)",
+      "Bash(./mvnw -q -DskipTests clean package)"
+    ]
+  }
+}

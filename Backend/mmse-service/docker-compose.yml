@@ -1,0 +1,42 @@
+services:
+  mmse-mysql:
+    image: mysql:8.0
+    container_name: mmse-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MYSQL_DATABASE=mmse_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mmse_mysql_data:/var/lib/mysql
+    networks:
+      - shared_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-padmin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mmse-service:
+    build: .
+    image: mmse-service:latest
+    container_name: mmse-service
+    depends_on:
+      mmse-mysql:
+        condition: service_healthy
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8080/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mmse-mysql:3306/mmse_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=admin123
+    ports:
+      - "8085:8085"
+    networks:
+      - shared_network
+
+volumes:
+  mmse_mysql_data:
+
+networks:
+  shared_network:
+    external: true

@@ -1,0 +1,17 @@
+# Root stack — brings up every microservice via Compose `include`.
+# Each included file keeps its own services, volumes and (external) network,
+# so you can still run them individually from their own folders.
+#
+# Prereqs:
+#   docker network create shared_network
+#   build jars first: ./mvnw -DskipTests package  (in each service folder)
+#
+# Usage:
+#   docker compose up -d --build
+#   docker compose down
+include:
+  - keycloak/docker-compose.yml
+  - eureka-server/docker-compose.yml
+  - medical-service/docker-compose.yml
+  - mmse-service/docker-compose.yml
+  - apiGateway/docker-compose.yml

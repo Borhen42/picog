@@ -1,0 +1,21 @@
+# Argo CD project that scopes what the COGNIVITA apps may deploy and from where.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cognivita
+  namespace: argocd
+spec:
+  description: COGNIVITA microservices (GitOps CD)
+  sourceRepos:
+    - https://github.com/Borhen42/pi-cognitive.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: cognivita
+    - server: https://kubernetes.default.svc
+      namespace: argocd          # the app-of-apps creates child Applications here
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

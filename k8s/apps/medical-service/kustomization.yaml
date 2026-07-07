@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+images:
+  - name: medical-service
+    newName: docker.io/borhen42/medical-service
+    newTag: latest

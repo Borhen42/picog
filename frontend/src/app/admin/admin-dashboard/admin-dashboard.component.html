@@ -1,0 +1,434 @@
+<div class="dashboard-wrapper">
+  <!-- Success toast -->
+  <div *ngIf="deleteSuccessMessage" class="toast-success">
+    <span class="toast-icon">✓</span>
+    <span>{{ deleteSuccessMessage }}</span>
+  </div>
+
+  <!-- Header Section -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-title">
+        <span class="header-icon">⚙️</span>
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p class="header-subtitle">Manage users and monitor MMSE test results</p>
+        </div>
+      </div>
+      <div class="header-date">
+        <span class="date-icon">📅</span>
+        <span>{{ today | date:'fullDate' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Cards -->
+  <section class="stats-grid">
+    <div class="stat-card users-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <span class="stat-label">Total Users</span>
+        <span class="stat-value">{{ stats.usersCount }}</span>
+      </div>
+      <div class="stat-trend trend-up">
+        <span>↗</span>
+      </div>
+    </div>
+    
+    <div class="stat-card active-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <span class="stat-label">Active Users</span>
+        <span class="stat-value">{{ stats.activeUsersCount }}</span>
+      </div>
+      <div class="stat-trend trend-up">
+        <span>↗</span>
+      </div>
+    </div>
+    
+    <div
+      class="stat-card tests-card stat-clickable"
+      role="button"
+      tabindex="0"
+      (click)="goToMmseTests()"
+      (keydown.enter)="goToMmseTests()"
+      (keydown.space)="$event.preventDefault(); goToMmseTests()"
+      title="Open MMSE tests"
+    >
+      <div class="stat-icon">📋</div>
+      <div class="stat-content">
+        <span class="stat-label">MMSE Tests</span>
+        <span class="stat-value">{{ stats.mmseTestsCount }}</span>
+      </div>
+      <div class="stat-trend trend-neutral">
+        <span>→</span>
+      </div>
+    </div>
+
+    <div class="stat-card medical-card">
+      <div class="stat-icon">🗂️</div>
+      <div class="stat-content">
+        <span class="stat-label">Medical Records</span>
+        <span class="stat-value">{{ stats.medicalRecordsCount }}</span>
+      </div>
+      <div class="stat-trend trend-neutral">
+        <span>→</span>
+      </div>
+    </div>
+    
+    <div class="stat-card rate-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <span class="stat-label">Completion Rate</span>
+        <span class="stat-value">{{ stats.usersCount > 0 ? ((stats.mmseTestsCount / stats.usersCount) * 100).toFixed(0) : 0 }}%</span>
+      </div>
+      <div class="stat-trend trend-up">
+        <span>↗</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Users Table Section -->
+  <section class="table-section">
+    <div class="section-header">
+      <h2>
+        <span class="section-icon">👤</span>
+        Users & MMSE Test Results
+      </h2>
+      <div class="section-actions">
+        <button class="btn-refresh" (click)="loadDashboard()">
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-state">
+      <span class="error-icon">⚠️</span>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="loadDashboard()">Try Again</button>
+    </div>
+
+    <!-- Search & Filters -->
+    <div *ngIf="!loading && users.length > 0" class="search-filters">
+      <div class="search-bar">
+        <label for="search-users">Recherche</label>
+        <input id="search-users" type="text" [(ngModel)]="searchUsersQuery" placeholder="ID, nom, email, rôle..." />
+      </div>
+      <div class="filter-group">
+        <label for="filter-users-role">Role</label>
+        <select id="filter-users-role" [(ngModel)]="filterUsersRole">
+          <option value="">All roles</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="DOCTOR">DOCTOR</option>
+          <option value="USER">USER</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-users-status">Status</label>
+        <select id="filter-users-status" [(ngModel)]="filterUsersStatus">
+          <option value="">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div *ngIf="!loading && users.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th (click)="setSortUsers('userId')" class="sortable">{{ sortIconUsers('userId') }} ID</th>
+            <th (click)="setSortUsers('firstName')" class="sortable">{{ sortIconUsers('firstName') }} User</th>
+            <th (click)="setSortUsers('email')" class="sortable">{{ sortIconUsers('email') }} Email</th>
+            <th (click)="setSortUsers('role')" class="sortable">{{ sortIconUsers('role') }} Role</th>
+            <th (click)="setSortUsers('active')" class="sortable">{{ sortIconUsers('active') }} Status</th>
+            <th>MMSE Results</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers; let i = index" [class.alternate]="i % 2 === 1">
+            <td class="cell-id">
+              <span class="id-badge">#{{ user.userId }}</span>
+            </td>
+            <td class="cell-user">
+              <div class="user-info">
+                <div class="user-avatar">{{ user.firstName?.charAt(0) }}{{ user.lastName?.charAt(0) }}</div>
+                <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+              </div>
+            </td>
+            <td class="cell-email">
+              <a href="mailto:{{ user.email }}">{{ user.email }}</a>
+            </td>
+            <td class="cell-role">
+              <span class="role-badge" [ngClass]="user.role?.toLowerCase()">
+                {{ user.role }}
+              </span>
+            </td>
+            <td class="cell-status">
+              <span class="status-badge" [ngClass]="{'status-active': user.active, 'status-inactive': !user.active}">
+                <span class="status-dot"></span>
+                {{ user.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="cell-mmse">
+              <div *ngIf="user.mmseTests && user.mmseTests.length > 0" class="mmse-container">
+                <div *ngFor="let test of user.mmseTests" class="mmse-card">
+                  <div class="mmse-score">
+                    <span class="score-value">{{ test.totalScore }}</span>
+                    <span class="score-total">/30</span>
+                  </div>
+                  <div class="mmse-details">
+                    <span class="mmse-interpretation" [ngClass]="getInterpretationClass(test.totalScore)">
+                      {{ getMMSEInterpretation(test.totalScore) }}
+                    </span>
+                    <span class="care-badge" [ngClass]="getCareClass(test.totalScore)">
+                      {{ getCareLabel(test.totalScore) }}
+                    </span>
+                    <span class="mmse-date">{{ test.testDate | date:'MMM d, yyyy' }}</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!user.mmseTests || user.mmseTests.length === 0" class="no-tests-badge">
+                <span>—</span> No tests
+              </div>
+            </td>
+            <td class="cell-actions">
+              <div class="action-buttons">
+                <button class="btn-action btn-view" title="View Details">👁️</button>
+                <button class="btn-action btn-edit" title="Edit User">✏️</button>
+                <button class="btn-action btn-delete" (click)="deleteUser(user.userId)" title="Delete User">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No search results -->
+    <div *ngIf="!loading && users.length > 0 && filteredUsers.length === 0" class="empty-state">
+      <span class="empty-icon">🔍</span>
+      <h3>Aucun résultat</h3>
+      <p>Modifiez la recherche ou réinitialisez le filtre.</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && users.length === 0" class="empty-state">
+      <span class="empty-icon">📭</span>
+      <h3>No Users Found</h3>
+      <p>There are no users in the system yet.</p>
+    </div>
+  </section>
+
+  <!-- Medical Records Table Section -->
+  <section class="table-section medical-section">
+    <div class="section-header">
+      <h2>
+        <span class="section-icon">🗂️</span>
+        Medical Records Management
+      </h2>
+      <div class="section-actions">
+        <button class="btn-refresh" (click)="loadMedicalRecords()">
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loadingMedical" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading medical records...</p>
+    </div>
+
+    <div *ngIf="medicalError && !loadingMedical" class="error-state">
+      <span class="error-icon">⚠️</span>
+      <p>{{ medicalError }}</p>
+      <button class="btn-retry" (click)="loadMedicalRecords()">Try Again</button>
+    </div>
+
+    <!-- Search & Filters Medical -->
+    <div *ngIf="!loadingMedical && medicalRecords.length > 0" class="search-filters">
+      <div class="search-bar">
+        <label for="search-medical">Recherche</label>
+        <input id="search-medical" type="text" [(ngModel)]="searchMedicalQuery" placeholder="ID, user, âge, genre, antécédents..." />
+      </div>
+      <div class="filter-group">
+        <label for="filter-medical-gender">Gender</label>
+        <select id="filter-medical-gender" [(ngModel)]="filterMedicalGender">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filter-medical-fh">Family history</label>
+        <select id="filter-medical-fh" [(ngModel)]="filterMedicalFamilyHistory">
+          <option value="">All</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="!loadingMedical && medicalRecords.length > 0" class="table-container">
+      <table class="data-table medical-table">
+        <thead>
+          <tr>
+            <th (click)="setSortMedical('id')" class="sortable">{{ sortIconMedical('id') }} ID</th>
+            <th (click)="setSortMedical('userName')" class="sortable">{{ sortIconMedical('userName') }} User</th>
+            <th (click)="setSortMedical('age')" class="sortable">{{ sortIconMedical('age') }} Age</th>
+            <th (click)="setSortMedical('gender')" class="sortable">{{ sortIconMedical('gender') }} Gender</th>
+            <th (click)="setSortMedical('familyHistory')" class="sortable">{{ sortIconMedical('familyHistory') }} Family History</th>
+            <th (click)="setSortMedical('updatedAt')" class="sortable">{{ sortIconMedical('updatedAt') }} Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of filteredMedicalRecords; let i = index" [class.alternate]="i % 2 === 1">
+            <td class="cell-id">
+              <span class="id-badge">#{{ record.id }}</span>
+            </td>
+            <td class="cell-user">
+              <div class="user-info">
+                <div class="user-avatar">{{ (record.userName || 'U').charAt(0) }}</div>
+                <div class="user-name">
+                  {{ record.userName || record.userEmail || ('User #' + record.userId) }}
+                  <div class="subtle">{{ record.userEmail || ('ID: ' + record.userId) }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ record.age }}</td>
+            <td>{{ record.gender }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="{'status-active': record.familyHistory === 'Yes', 'status-inactive': record.familyHistory !== 'Yes'}">
+                <span class="status-dot"></span>
+                {{ record.familyHistory === 'Yes' ? 'Yes' : 'No' }}
+              </span>
+            </td>
+            <td>{{ (record.updatedAt || record.createdAt) | date:'MMM d, yyyy' }}</td>
+            <td class="cell-actions">
+              <div class="action-buttons">
+                <button class="btn-action btn-edit" (click)="editMedicalRecord(record)" title="Edit Record">✏️</button>
+                <button class="btn-action btn-delete" (click)="deleteMedicalRecord(record.id)" title="Delete Record">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingMedical && medicalRecords.length > 0 && filteredMedicalRecords.length === 0" class="empty-state">
+      <span class="empty-icon">🔍</span>
+      <h3>Aucun résultat</h3>
+      <p>Modifiez la recherche ou réinitialisez le filtre.</p>
+    </div>
+    <div *ngIf="!loadingMedical && medicalRecords.length === 0 && !medicalError" class="empty-state">
+      <span class="empty-icon">📭</span>
+      <h3>No Medical Records Found</h3>
+      <p>Create a record in “Medical Records” page first.</p>
+    </div>
+  </section>
+
+  <!-- Confirm Delete User Modal -->
+  <div *ngIf="confirmDeleteUser !== null" class="modal-backdrop" (click)="cancelDeleteUser()">
+    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-warning">
+        <h3>Delete user?</h3>
+        <button type="button" class="modal-close" (click)="cancelDeleteUser()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cancelDeleteUser()">Cancel</button>
+        <button type="button" class="btn-delete-confirm" (click)="confirmUserDelete()">Yes, delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Medical Record Modal -->
+  <div *ngIf="confirmDeleteMedical !== null" class="modal-backdrop" (click)="cancelDeleteMedical()">
+    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-warning">
+        <h3>Delete medical record?</h3>
+        <button type="button" class="modal-close" (click)="cancelDeleteMedical()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cancelDeleteMedical()">Cancel</button>
+        <button type="button" class="btn-delete-confirm" (click)="confirmMedicalDelete()">Yes, delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Record Edit Modal -->
+  <div *ngIf="editingMedicalRecord" class="modal-backdrop" (click)="closeMedicalEditor()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Edit Medical Record #{{ editingMedicalRecord.id }}</h3>
+        <button class="modal-close" (click)="closeMedicalEditor()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <label>
+            <span>Age</span>
+            <input type="number" [(ngModel)]="medicalForm.age" min="0" max="150" />
+          </label>
+
+          <label>
+            <span>Gender</span>
+            <select [(ngModel)]="medicalForm.gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Family History</span>
+            <select [(ngModel)]="medicalForm.familyHistory">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </label>
+
+          <label class="full">
+            <span>Education Level</span>
+            <input type="text" [(ngModel)]="medicalForm.educationLevel" />
+          </label>
+
+          <label class="full">
+            <span>Risk Factors</span>
+            <textarea rows="3" [(ngModel)]="medicalForm.riskFactors"></textarea>
+          </label>
+
+          <label class="full">
+            <span>Current Symptoms</span>
+            <textarea rows="3" [(ngModel)]="medicalForm.currentSymptoms"></textarea>
+          </label>
+
+          <label class="full">
+            <span>Diagnosis Notes</span>
+            <textarea rows="4" [(ngModel)]="medicalForm.diagnosisNotes"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-refresh" (click)="closeMedicalEditor()">Cancel</button>
+        <button class="btn-primary" (click)="saveMedicalRecord()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>

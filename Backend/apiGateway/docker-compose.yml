@@ -1,0 +1,15 @@
+services:
+  api-gateway:
+    build: .
+    image: api-gateway:latest
+    container_name: api-gateway
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8080/eureka/
+    ports:
+      - "8093:8093"
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true

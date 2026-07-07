@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: medical-mysql-pvc
+  namespace: cognivita
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path      # Rancher local-path-provisioner (your default SC)
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-mysql
+  namespace: cognivita
+  labels:
+    app: medical-mysql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate               # single RWO volume — never run two writers at once
+  selector:
+    matchLabels:
+      app: medical-mysql
+  template:
+    metadata:
+      labels:
+        app: medical-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          args: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medical-db-secret
+                  key: mysql-root-password
+            - name: MYSQL_DATABASE
+              value: medical_db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: medical-mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-mysql
+  namespace: cognivita
+spec:
+  selector:
+    app: medical-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306

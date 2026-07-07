@@ -1,0 +1,26 @@
+# App-of-apps: the single Application you bootstrap by hand. It watches
+# k8s/argocd/apps/ and creates one child Application per service (+ infra), each of
+# which then syncs its own manifests. Apply this once (see k8s/README.md) and Argo CD
+# owns everything from there.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cognivita-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cognivita
+  source:
+    repoURL: https://github.com/Borhen42/pi-cognitive.git
+    targetRevision: main
+    path: k8s/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

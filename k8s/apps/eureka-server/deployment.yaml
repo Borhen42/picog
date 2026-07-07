@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+  namespace: cognivita
+  labels:
+    app: eureka-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eureka-server
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      containers:
+        - name: eureka-server
+          image: eureka-server          # rewritten by kustomize (images:) + CI
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server               # DNS name the other services register against
+  namespace: cognivita
+spec:
+  selector:
+    app: eureka-server
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Optional: view the Eureka registry dashboard at http://eureka.local:30080
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eureka-server
+  namespace: cognivita
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: eureka.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8080

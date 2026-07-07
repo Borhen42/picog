@@ -1,0 +1,21 @@
+<div class="page">
+  <div class="glass">
+
+    <h1>Alzheimer MRI Detection</h1>
+
+    <input type="file" (change)="onFileSelected($event)">
+    <button (click)="onSubmit()" [disabled]="loading || !selectedFile">
+      Analyze MRI
+    </button>
+
+    <p *ngIf="loading">⏳ Analyzing image...</p>
+
+    <div *ngIf="result" class="result">
+      <h2>Result: {{ result.prediction }}</h2>
+      <p>Confidence: {{ result.confidence }}%</p>
+
+      <app-brain3d [diagnosis]="result.prediction"></app-brain3d>
+    </div>
+
+  </div>
+</div>
