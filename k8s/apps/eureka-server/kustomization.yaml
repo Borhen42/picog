@@ -5,5 +5,5 @@ resources:
 # CI (yq) keeps newName/newTag in sync with the DOCKERHUB_USERNAME secret + commit SHA.
 images:
   - name: eureka-server
-    newName: docker.io/borhen42/eureka-server
-    newTag: latest
+    newName: docker.io/borhen2/eureka-server
+    newTag: feee67d
