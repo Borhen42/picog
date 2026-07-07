@@ -21,6 +21,14 @@ on:
         description: kustomize app dir whose image tag CI bumps (e.g. k8s/apps/medical-service)
         required: true
         type: string
+      project_key:
+        description: Unique SonarQube Cloud project key (e.g. cognivita-medical-service)
+        required: true
+        type: string
+      project_name:
+        description: SonarQube Cloud project display name
+        required: true
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -69,8 +77,8 @@ jobs:
             -Dsonar.host.url="$SONAR_HOST_URL" \
             -Dsonar.token="$SONAR_TOKEN" \
             -Dsonar.organization=borhen42 \
-            -Dsonar.projectKey=borhen42 \
-            -Dsonar.projectName="mesaoudiborhen" \
+            -Dsonar.projectKey="${{ inputs.project_key }}" \
+            -Dsonar.projectName="${{ inputs.project_name }}" \
             -Dsonar.qualitygate.wait=true
 
       - name: Compute image tag (short SHA)

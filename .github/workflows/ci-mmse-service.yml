@@ -23,6 +23,8 @@ jobs:
       service_dir: mmse-service
       image_name: mmse-service
       manifest_dir: k8s/apps/mmse-service
+      project_key: cognivita-mmse-service
+      project_name: cognivita-mmse-service
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
