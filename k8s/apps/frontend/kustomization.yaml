@@ -5,4 +5,4 @@ resources:
 images:
   - name: cognivita-frontend
     newName: docker.io/borhen2/cognivita-frontend
-    newTag: e4321a9
+    newTag: 600355d
