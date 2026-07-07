@@ -70,7 +70,7 @@ jobs:
             -Dsonar.token="$SONAR_TOKEN" \
             -Dsonar.organization=mesaoudiborhen \
             -Dsonar.projectKey=borhen42 \
-            -Dsonar.projectName=mesaoudiborhen \
+            -Dsonar.projectName="borhen42" \
             -Dsonar.qualitygate.wait=true
 
       - name: Compute image tag (short SHA)
