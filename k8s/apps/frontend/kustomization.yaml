@@ -4,5 +4,5 @@ resources:
   - deployment.yaml
 images:
   - name: cognivita-frontend
-    newName: docker.io/borhen42/cognivita-frontend
-    newTag: latest
+    newName: docker.io/borhen2/cognivita-frontend
+    newTag: e4321a9
