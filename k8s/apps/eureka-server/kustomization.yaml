@@ -6,4 +6,4 @@ resources:
 images:
   - name: eureka-server
     newName: docker.io/borhen2/eureka-server
-    newTag: feee67d
+    newTag: b69cb50
