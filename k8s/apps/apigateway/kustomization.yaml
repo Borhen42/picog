@@ -4,5 +4,5 @@ resources:
   - deployment.yaml
 images:
   - name: api-gateway
-    newName: docker.io/borhen42/api-gateway
-    newTag: latest
+    newName: docker.io/borhen2/api-gateway
+    newTag: feee67d
