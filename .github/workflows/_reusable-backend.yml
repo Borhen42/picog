@@ -68,9 +68,9 @@ jobs:
             org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar \
             -Dsonar.host.url="$SONAR_HOST_URL" \
             -Dsonar.token="$SONAR_TOKEN" \
-            -Dsonar.organization=mesaoudi borhen \
+            -Dsonar.organization=mesaoudiborhen \
             -Dsonar.projectKey=borhen42 \
-            -Dsonar.projectName=mesaoudi borhen \
+            -Dsonar.projectName=mesaoudiborhen \
             -Dsonar.qualitygate.wait=true
 
       - name: Compute image tag (short SHA)
