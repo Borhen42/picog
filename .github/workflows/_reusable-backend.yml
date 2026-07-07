@@ -3,6 +3,7 @@
 # own Maven wrapper, builds a Docker image, pushes it to Docker Hub tagged with the
 # short commit SHA, and then bumps that tag in the service's kustomize manifest so
 # Argo CD (GitOps) rolls it out. See k8s/README.md for the end-to-end flow.
+# UPDATE !! access write granted in github.com to actions
 name: reusable-backend
 
 on:
