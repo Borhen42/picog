@@ -5,4 +5,4 @@ resources:
 images:
   - name: medical-service
     newName: docker.io/borhen2/medical-service
-    newTag: feee67d
+    newTag: b69cb50
