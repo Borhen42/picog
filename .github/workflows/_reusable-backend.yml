@@ -79,7 +79,7 @@ jobs:
             -Dsonar.organization=borhen42 \
             -Dsonar.projectKey="${{ inputs.project_key }}" \
             -Dsonar.projectName="${{ inputs.project_name }}" \
-            -Dsonar.qualitygate.wait=false
+            -Dsonar.qualitygate.wait=false 
 
       - name: Compute image tag (short SHA)
         id: meta
