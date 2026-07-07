@@ -11,10 +11,11 @@ githubConfigUrl: https://github.com/Borhen42/picog
 # classic PAT under key `github_token`. install-arc.sh creates it; it is NEVER committed.
 githubConfigSecret: arc-github-secret
 
-# Single-node cluster — keep concurrency modest. minRunners: 1 keeps one runner warm so
-# the scale set shows "online" and jobs start fast; set it to 0 to free resources when idle.
-minRunners: 1
-maxRunners: 3
+# Single laptop node — SERIALIZE builds. Each runner carries a dind daemon AND runs
+# `docker build`, so 3 in parallel saturated the node and even hung the WSL relay. maxRunners:1
+# runs one job at a time (slower, stable). minRunners:0 = no idle load between jobs.
+minRunners: 0
+maxRunners: 1
 
 # Docker-in-Docker: gives every runner pod its own Docker daemon (a `dind` sidecar) so the
 # pipelines' `docker/build-push-action` steps work unchanged. Required here because CI builds

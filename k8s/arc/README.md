@@ -28,11 +28,21 @@ The runner scale set's Helm **release name is the `runs-on:` label** → `cogniv
 Runners use **Docker-in-Docker** (`containerMode: dind`) so the existing
 `docker/build-push-action` steps keep working with no change.
 
-## 1. Create a PAT (classic)
+## 1. Create a PAT
 
-github.com ▸ Settings ▸ Developer settings ▸ **Personal access tokens (classic)** ▸ Generate.
-Scope: **`repo`** (repo-level runner registration). Copy the `ghp_…` value — it's used once to
-create a Kubernetes Secret and is **never committed**.
+The PAT must be allowed to **register self-hosted runners on the repo**. Two ways:
+
+- **Classic (simplest):** Settings ▸ Developer settings ▸ **Tokens (classic)** ▸ Generate ▸
+  tick the whole **`repo`** scope. Value looks like `ghp_…`.
+- **Fine-grained:** Settings ▸ Developer settings ▸ **Fine-grained tokens** ▸ give it access to
+  **`Borhen42/picog`** and set Repository permissions ▸ **Administration: Read and write**
+  (Metadata: Read is auto). Value looks like `github_pat_…`.
+
+> ⚠️ The #1 failure: a token without repo-runner admin rights. The controller logs
+> `registration-token failed (403 Forbidden): Resource not accessible by personal access token`
+> and **no listener/runner ever appears**. Fine-grained tokens fail this way unless
+> **Administration: Read and write** is granted. Copy the value — it's used once to create a
+> Kubernetes Secret and is **never committed**.
 
 ## 2. Install (run once, in WSL, from the repo root)
 
@@ -64,6 +74,14 @@ kubectl -n arc-runners  get pods,autoscalingrunnersets            # listener Run
 - Trigger a workflow (Actions ▸ *CI · medical-service* ▸ Run workflow). A runner pod appears
   in `arc-runners`, the job runs, and its log shows the Sonar step hitting the `svc.cluster.local` URL.
 - SonarQube lists the `cognivita-*` projects with analysis + gate results.
+
+## First run is slow (not stuck)
+
+The very first runner pod pulls the runner image (`ghcr.io/actions/actions-runner`, ~543 MB)
+and the `docker:dind` sidecar. On this WSL node that first pull took ~9 min, so the pod sits
+in `Init:0/2` → `Init:1/2` and looks hung — it isn't. Both images are cached afterward, so
+later runners start in seconds. Watch with `kubectl -n arc-runners get pods -w`. To skip the
+wait entirely later, bake tools into a custom runner image and set it in the values file.
 
 ## Quality gate notes (enforced)
 
