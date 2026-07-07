@@ -5,4 +5,4 @@ resources:
 images:
   - name: mmse-service
     newName: docker.io/borhen2/mmse-service
-    newTag: feee67d
+    newTag: b69cb50
